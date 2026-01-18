@@ -87,13 +87,27 @@
       return date.toLocaleDateString('en-US', { weekday: 'long' });
     }
 
-    function generateDays(centerDate, range = 60) {
+    const START_DATE = new Date(2026, 0, 1); // January 1, 2026
+
+    function generateDays(fromDate, daysAhead = 60) {
       const days = [];
-      for (let i = -range; i <= range; i++) {
-        const date = new Date(centerDate);
-        date.setDate(date.getDate() + i);
-        days.push(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Start from START_DATE or fromDate, whichever is later
+      let startFrom = new Date(Math.max(START_DATE.getTime(), fromDate.getTime()));
+      startFrom.setHours(0, 0, 0, 0);
+
+      // Generate days from startFrom up to daysAhead from today
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + daysAhead);
+
+      let currentDate = new Date(startFrom);
+      while (currentDate <= endDate) {
+        days.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
       }
+
       return days;
     }
 
@@ -170,7 +184,7 @@
       const [walks, setWalks] = useState({});
       const [selectedSegment, setSelectedSegment] = useState(null);
       const [showLeaderboard, setShowLeaderboard] = useState(false);
-      const [days, setDays] = useState(() => generateDays(new Date()));
+      const [days, setDays] = useState(() => generateDays(START_DATE));
       const scrollRef = useRef(null);
       const todayRef = useRef(null);
       const [isInitialScroll, setIsInitialScroll] = useState(true);
@@ -220,19 +234,9 @@
 
       const handleScroll = () => {
         if (!scrollRef.current) return;
-        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+        const { scrollHeight, scrollTop, clientHeight } = scrollRef.current;
 
-        if (scrollTop < 500) {
-          const firstDay = days[0];
-          const newDays = [];
-          for (let i = 30; i > 0; i--) {
-            const date = new Date(firstDay);
-            date.setDate(date.getDate() - i);
-            newDays.push(date);
-          }
-          setDays([...newDays, ...days]);
-        }
-
+        // Only load more future days when scrolling near bottom
         if (scrollHeight - scrollTop - clientHeight < 500) {
           const lastDay = days[days.length - 1];
           const newDays = [];
@@ -440,6 +444,7 @@
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           toggleWalker(dateKey, segment, walker);
+                                          setSelectedSegment(null);
                                         }}
                                         className={`px-4 py-3 rounded-xl font-medium transition-all transform hover:scale-105 ${
                                           isActive
@@ -456,12 +461,6 @@
                                     );
                                   })}
                                 </div>
-                                <button
-                                  onClick={() => setSelectedSegment(null)}
-                                  className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-700"
-                                >
-                                  Done
-                                </button>
                               </div>
                             )}
                           </div>
