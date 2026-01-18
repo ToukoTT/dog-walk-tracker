@@ -4,19 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dog Walk Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐕</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div id="root"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
+
+    // ============================================
+    // 🔧 FIREBASE CONFIGURATION
+    // Replace these values with your own Firebase config!
+    // See instructions below the app code.
+    // ============================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyCVLXuIBj7QakGwiAilyzumou7iFKM9ZMQ",
+      authDomain: "dog-walk-tracker-3e47c.firebaseapp.com",
+      databaseURL: "https://dog-walk-tracker-3e47c-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "dog-walk-tracker-3e47c",
+      storageBucket: "dog-walk-tracker-3e47c.firebasestorage.app",
+      messagingSenderId: "135801727734",
+      appId: "1:135801727734:web:d3ec69fa6d63c8f47d9ad7"
+    };
+
+    // Check if Firebase is configured
+    const isFirebaseConfigured = !firebaseConfig.apiKey.includes("YOUR_");
+
+    // Initialize Firebase only if configured
+    let database = null;
+    if (isFirebaseConfigured) {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+      } catch (e) {
+        console.error("Firebase init error:", e);
+      }
+    }
 
     const WALKERS = ['Touko', 'Annika', 'Otso', 'Oskari'];
     const SEGMENTS = ['Morning', 'Day', 'Evening'];
@@ -58,36 +97,126 @@
       return days;
     }
 
+    // Setup Instructions Component
+    function SetupInstructions() {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-6 mb-4">
+              <div className="text-center mb-6">
+                <span className="text-6xl">🐕</span>
+                <h1 className="text-2xl font-bold text-gray-800 mt-2">Dog Walk Tracker Setup</h1>
+                <p className="text-gray-500 mt-1">One-time setup to enable family sharing</p>
+              </div>
+
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+                <p className="text-amber-800 font-medium">⚡ This only takes 5 minutes!</p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="border-l-4 border-blue-400 pl-4">
+                  <h3 className="font-bold text-gray-800">Step 1: Create Firebase Project</h3>
+                  <ol className="mt-2 text-gray-600 space-y-1 text-sm list-decimal list-inside">
+                    <li>Go to <a href="https://console.firebase.google.com" target="_blank" className="text-blue-500 underline">console.firebase.google.com</a></li>
+                    <li>Click "Create a project" (or "Add project")</li>
+                    <li>Name it "dog-walk-tracker" and click Continue</li>
+                    <li>Disable Google Analytics (not needed) and click Create</li>
+                  </ol>
+                </div>
+
+                <div className="border-l-4 border-green-400 pl-4">
+                  <h3 className="font-bold text-gray-800">Step 2: Create Realtime Database</h3>
+                  <ol className="mt-2 text-gray-600 space-y-1 text-sm list-decimal list-inside">
+                    <li>In Firebase Console, click "Build" → "Realtime Database"</li>
+                    <li>Click "Create Database"</li>
+                    <li>Choose your location (any is fine)</li>
+                    <li>Select "Start in <strong>test mode</strong>" and click Enable</li>
+                  </ol>
+                </div>
+
+                <div className="border-l-4 border-purple-400 pl-4">
+                  <h3 className="font-bold text-gray-800">Step 3: Get Your Config</h3>
+                  <ol className="mt-2 text-gray-600 space-y-1 text-sm list-decimal list-inside">
+                    <li>Click the ⚙️ gear icon → "Project settings"</li>
+                    <li>Scroll down to "Your apps" and click the web icon {"</>"}</li>
+                    <li>Name it "Dog Walk Tracker" and click "Register app"</li>
+                    <li>Copy the firebaseConfig object shown</li>
+                  </ol>
+                </div>
+
+                <div className="border-l-4 border-orange-400 pl-4">
+                  <h3 className="font-bold text-gray-800">Step 4: Update This File</h3>
+                  <ol className="mt-2 text-gray-600 space-y-1 text-sm list-decimal list-inside">
+                    <li>Open index.html in a text editor</li>
+                    <li>Find the <code className="bg-gray-100 px-1 rounded">firebaseConfig</code> section near the top</li>
+                    <li>Replace the placeholder values with your config</li>
+                    <li>Save and refresh the page!</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                <p className="text-sm text-gray-600">
+                  <strong>💡 Tip:</strong> Once configured, upload this file to GitHub Pages and share the link with your family. Everyone will see the same walk data in real-time!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     function DogWalkTracker() {
-      const [walks, setWalks] = useState(() => {
-        try {
-          const saved = localStorage.getItem('dogWalks');
-          return saved ? JSON.parse(saved) : {};
-        } catch {
-          return {};
-        }
-      });
+      const [walks, setWalks] = useState({});
       const [selectedSegment, setSelectedSegment] = useState(null);
       const [showLeaderboard, setShowLeaderboard] = useState(false);
       const [days, setDays] = useState(() => generateDays(new Date()));
       const scrollRef = useRef(null);
       const todayRef = useRef(null);
       const [isInitialScroll, setIsInitialScroll] = useState(true);
+      const [isLoading, setIsLoading] = useState(true);
+      const [isOnline, setIsOnline] = useState(true);
+
+      // Subscribe to Firebase data
+      useEffect(() => {
+        if (!database) {
+          setIsLoading(false);
+          return;
+        }
+
+        const walksRef = database.ref('walks');
+
+        // Listen for changes
+        const unsubscribe = walksRef.on('value', (snapshot) => {
+          const data = snapshot.val() || {};
+          setWalks(data);
+          setIsLoading(false);
+        }, (error) => {
+          console.error("Firebase read error:", error);
+          setIsOnline(false);
+          setIsLoading(false);
+        });
+
+        // Connection state
+        const connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', (snap) => {
+          setIsOnline(snap.val() === true);
+        });
+
+        return () => {
+          walksRef.off('value', unsubscribe);
+          connectedRef.off();
+        };
+      }, []);
 
       useEffect(() => {
-        try {
-          localStorage.setItem('dogWalks', JSON.stringify(walks));
-        } catch {}
-      }, [walks]);
-
-      useEffect(() => {
-        if (todayRef.current && isInitialScroll) {
+        if (todayRef.current && isInitialScroll && !isLoading) {
           setTimeout(() => {
             todayRef.current.scrollIntoView({ block: 'center' });
             setIsInitialScroll(false);
           }, 100);
         }
-      }, [isInitialScroll]);
+      }, [isInitialScroll, isLoading]);
 
       const handleScroll = () => {
         if (!scrollRef.current) return;
@@ -117,29 +246,40 @@
       };
 
       const toggleWalker = (dateKey, segment, walker) => {
-        setWalks(prev => {
-          const key = `${dateKey}-${segment}`;
-          const current = prev[key] || [];
-          const updated = current.includes(walker)
-            ? current.filter(w => w !== walker)
-            : [...current, walker];
-          return { ...prev, [key]: updated };
-        });
+        const key = `${dateKey}-${segment}`.replace(/\./g, '_');
+        const current = walks[key] || [];
+        const updated = current.includes(walker)
+          ? current.filter(w => w !== walker)
+          : [...current, walker];
+
+        // Update Firebase
+        if (database) {
+          database.ref(`walks/${key}`).set(updated.length > 0 ? updated : null);
+        }
+
+        // Optimistic update
+        setWalks(prev => ({
+          ...prev,
+          [key]: updated.length > 0 ? updated : undefined
+        }));
       };
 
       const getWalkers = (dateKey, segment) => {
-        return walks[`${dateKey}-${segment}`] || [];
+        const key = `${dateKey}-${segment}`.replace(/\./g, '_');
+        return walks[key] || [];
       };
 
       const getLeaderboardStats = () => {
         const stats = {};
         WALKERS.forEach(w => stats[w] = 0);
         Object.values(walks).forEach(walkerList => {
-          walkerList.forEach(walker => {
-            if (stats[walker] !== undefined) {
-              stats[walker]++;
-            }
-          });
+          if (Array.isArray(walkerList)) {
+            walkerList.forEach(walker => {
+              if (stats[walker] !== undefined) {
+                stats[walker]++;
+              }
+            });
+          }
         });
         return Object.entries(stats)
           .sort((a, b) => b[1] - a[1])
@@ -151,7 +291,18 @@
         return date.toDateString() === today.toDateString();
       };
 
-      const totalWalks = Object.values(walks).reduce((sum, arr) => sum + (arr.length > 0 ? 1 : 0), 0);
+      const totalWalks = Object.values(walks).reduce((sum, arr) => sum + (Array.isArray(arr) && arr.length > 0 ? 1 : 0), 0);
+
+      if (isLoading) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="loader mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading walks...</p>
+            </div>
+          </div>
+        );
+      }
 
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -162,7 +313,15 @@
                 <span className="text-3xl">🐕</span>
                 <div>
                   <h1 className="text-lg font-bold text-gray-800">Dog Walk Tracker</h1>
-                  <p className="text-xs text-gray-500">{totalWalks} walks logged</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-gray-500">{totalWalks} walks logged</p>
+                    {!isOnline && (
+                      <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">Offline</span>
+                    )}
+                    {isOnline && database && (
+                      <span className="px-1.5 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">Live</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <button
@@ -398,7 +557,15 @@
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<DogWalkTracker />);
+    // Render the appropriate component
+    function App() {
+      if (!isFirebaseConfigured) {
+        return <SetupInstructions />;
+      }
+      return <DogWalkTracker />;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
 </html>
